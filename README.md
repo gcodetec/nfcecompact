@@ -1,0 +1,1 @@
+`nfcecompact -path="/tmp/nfetest"`
