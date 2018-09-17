@@ -19,7 +19,7 @@ func CompactFilesByCompetence(path string, competenceYear, competenceMonth int) 
 	}
 
 	for _, f := range files {
-		if isNfeFile(f) {
+		if !f.IsDir() && isNfeFile(f.Name()) {
 			year, month, _ := f.ModTime().Date()
 			if year == competenceYear && int(month) == competenceMonth {
 				fmt.Println(f.Name(), year, int(month))
@@ -46,11 +46,8 @@ func CompactFilesByCompetence(path string, competenceYear, competenceMonth int) 
 }
 
 // Check if file is a nfe file
-func isNfeFile(file os.FileInfo) bool {
-	if !file.IsDir() {
-		return strings.Contains(file.Name(), "-nfe")
-	}
-	return false
+func isNfeFile(fileName string) bool {
+	return strings.Contains(fileName, "-nfe")
 }
 
 // Create a path based on name
@@ -61,7 +58,6 @@ func createPath(path string) {
 }
 
 // move a file to new path
-
 func moveFileToPath(oldPath, newPath string) {
 	fmt.Printf("Moving file %v to %v\n", oldPath, newPath)
 	err := os.Rename(oldPath, newPath)
