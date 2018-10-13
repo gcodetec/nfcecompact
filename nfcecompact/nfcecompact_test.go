@@ -2,6 +2,7 @@ package nfcecompact
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 var fileName = "/tmp/nfcetmp-nfe.xml"
 var tmpPath = "/tmp/nfcecompact-test"
 var newFileName = tmpPath + "/nfcetmp-nfe.xml"
+var pathToCopy = "/tmp/nfces"
 
 func TestMain(m *testing.M) {
 	setUp()
@@ -21,12 +23,28 @@ func TestMain(m *testing.M) {
 func setUp() {
 	os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0666)
 	createPath(tmpPath)
+	createPath(pathToCopy)
+	createTestFile()
 }
 
 func tearDown() {
 	_ = os.Remove(fileName)
 	_ = os.RemoveAll(tmpPath)
+	_ = os.RemoveAll(pathToCopy)
 }
+
+func createTestFile() {
+	names := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	for _, name := range names {
+		content := []byte("<nfe>" + string(name) + "</nfe>")
+		fileName := fmt.Sprintf("%s/arquivo-%v-nfe.xml", pathToCopy, name)
+		err := ioutil.WriteFile(fileName, content, 0644)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func TestIsNfeFile(t *testing.T) {
 	fileName := "some-file-nfe.xml"
 	v := isNfeFile(fileName)
@@ -54,11 +72,31 @@ func TestCreatePath(t *testing.T) {
 	_ = os.Remove(path)
 }
 
+func TestCopyAllFilesToPath(t *testing.T) {
+	totalBytes := CopyAllFilesToPath(pathToCopy, tmpPath)
+	files := readDir(tmpPath)
+	length := len(files)
+	if length == 0 {
+		t.Errorf("files not copied")
+	}
+
+	if totalBytes == 0 {
+		t.Errorf("any file copied. Total bytes %v", totalBytes)
+	}
+}
 func TestMoveFileToPath(t *testing.T) {
 	moveFileToPath(fileName, newFileName)
 	_, err := os.Stat(newFileName)
 	if os.IsNotExist(err) {
 		t.Errorf("file %v not exists", newFileName)
+	}
+}
+
+func TestReadDir(t *testing.T) {
+	path := tmpPath
+	files := readDir(path)
+	if len(files) == 0 {
+		t.Errorf("files not found")
 	}
 }
 
